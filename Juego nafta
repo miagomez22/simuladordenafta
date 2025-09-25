@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulador de Nafta</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1e1e1e;
+      color: #fff;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 {
+      color: #f4d03f;
+    }
+    .medidor {
+      width: 300px;
+      height: 150px;
+      border-radius: 300px 300px 0 0;
+      background: #2c3e50;
+      margin: 30px auto;
+      position: relative;
+      border: 5px solid #444;
+    }
+    .aguja {
+      width: 4px;
+      height: 140px;
+      background: red;
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform-origin: bottom center;
+      transform: rotate(-90deg);
+      transition: transform 0.1s linear;
+    }
+    .marcas {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 10px;
+      color: #fff;
+      font-size: 14px;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 18px;
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      background: #007bff;
+      color: white;
+      margin: 10px;
+    }
+    button:disabled {
+      background: #666;
+      cursor: not-allowed;
+    }
+    #resultado {
+      font-size: 20px;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>⛽ Simulador de Cargar Nafta</h1>
+  <p>Objetivo: <span id="objetivo"></span> L</p>
+  <div class="medidor">
+    <div class="aguja" id="aguja"></div>
+    <div class="marcas">
+      <span>0</span>
+      <span>15</span>
+      <span>30</span>
+    </div>
+  </div>
+  <p>Cargado: <span id="litros">0</span> L</p>
+  <button id="boton">Mantener presionado para cargar</button>
+  <button id="reiniciar" style="display:none;">Reiniciar</button>
+  <p id="resultado"></p>
+
+  <!-- sonidos -->
+  <audio id="sonidoCargar" src="https://actions.google.com/sounds/v1/ambiences/gas_pump.ogg"></audio>
+  <audio id="sonidoWin" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+  <audio id="sonidoLose" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+
+  <script>
+    let objetivo;
+    let litros;
+    let interval;
+    let intento;
+
+    const aguja = document.getElementById("aguja");
+    const litrosTexto = document.getElementById("litros");
+    const resultado = document.getElementById("resultado");
+    const boton = document.getElementById("boton");
+    const reiniciarBtn = document.getElementById("reiniciar");
+    const objetivoTexto = document.getElementById("objetivo");
+
+    const sonidoCargar = document.getElementById("sonidoCargar");
+    const sonidoWin = document.getElementById("sonidoWin");
+    const sonidoLose = document.getElementById("sonidoLose");
+
+    function iniciarJuego(){
+      objetivo = (Math.random() * 20 + 5).toFixed(1); // entre 5 y 25
+      litros = 0;
+      intento = false;
+      objetivoTexto.textContent = objetivo;
+      litrosTexto.textContent = litros.toFixed(1);
+      resultado.textContent = "";
+      aguja.style.transform = "rotate(-90deg)";
+      boton.disabled = false;
+      reiniciarBtn.style.display = "none";
+    }
+
+    boton.addEventListener("mousedown", () => {
+      if (intento) return;
+      sonidoCargar.currentTime = 0;
+      sonidoCargar.play();
+      interval = setInterval(() => {
+        litros += 0.1;
+        if(litros > 30) litros = 30;
+        litrosTexto.textContent = litros.toFixed(1);
+        let angulo = -90 + (litros / 30) * 180;
+        aguja.style.transform = `rotate(${angulo}deg)`;
+      }, 100);
+    });
+
+    boton.addEventListener("mouseup", () => {
+      if (intento) return;
+      clearInterval(interval);
+      sonidoCargar.pause();
+      sonidoCargar.currentTime = 0;
+      intento = true;
+      boton.disabled = true;
+      reiniciarBtn.style.display = "inline-block";
+      let diferencia = Math.abs(litros - objetivo);
+      if (diferencia === 0) {
+        resultado.textContent = "🎉 ¡Ganaste! Lo clavaste exacto.";
+        resultado.style.color = "green";
+        sonidoWin.play();
+      } else {
+        if (litros < objetivo) {
+          resultado.textContent = "⛽ Te faltó, perdiste.";
+          resultado.style.color = "orange";
+        } else {
+          resultado.textContent = "💥 Te pasaste, perdiste.";
+          resultado.style.color = "red";
+        }
+        sonidoLose.play();
+      }
+    });
+
+    reiniciarBtn.addEventListener("click", iniciarJuego);
+
+    iniciarJuego();
+  </script>
+</body>
+</html>
